@@ -1,0 +1,93 @@
+name: FileOptimizer PortableApps - Verified Build
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Latest stable SourceForge version, or exact stable folder e.g. 18.10.2904'
+        required: true
+        type: string
+        default: latest
+      publish:
+        description: 'Actually publish validated ZIP and installer to THIS repository releases'
+        required: true
+        type: boolean
+        default: false
+permissions:
+  contents: write
+concurrency:
+  group: fileoptimizer-portableapps-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  package:
+    name: Official portable base -> compiled launcher -> ZIP -> PAF -> release
+    runs-on: windows-2022
+    timeout-minutes: 75
+    steps:
+      - name: Checkout independent builder repository
+        uses: actions/checkout@v4
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify SourceForge assets and build FileOptimizer Portable ZIP
+        id: resolved
+        shell: pwsh
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          & ./scripts/build.ps1 -Version $env:REQUESTED_VERSION
+          if ($LASTEXITCODE -ne 0) { throw 'Build.ps1 failed' }
+          $identity = Get-Content ./work/identity.json -Raw -Encoding utf8 | ConvertFrom-Json
+          "version=$($identity.version)" >> $env:GITHUB_OUTPUT
+          "tag=$($identity.release_tag)" >> $env:GITHUB_OUTPUT
+      - name: Build independent PortableApps-style installer (custom NSIS)
+        id: installer
+        uses: vhick/Portable-Package-Builder@v1.0.0
+        with:
+          source-dir: work/stage/FileOptimizerCommunityPortable
+          output-dir: dist
+          engine: custom-nsis
+          running-exe: App/FileOptimizer/FileOptimizer64.exe
+          timeout-seconds: '900'
+          package-revision: r1
+      - name: Validate resulting installer PE and checksum separately
+        shell: pwsh
+        env:
+          INSTALLER_FILE: ${{ steps.installer.outputs.installer-file }}
+          INSTALLER_SHA256: ${{ steps.installer.outputs.installer-sha256 }}
+        run: |
+          python ./scripts/verify_installer.py --file "$env:INSTALLER_FILE" --sha256 "$env:INSTALLER_SHA256" --dist ./dist
+          if ($LASTEXITCODE -ne 0) { throw 'Installer validation failed' }
+      - name: Publisher dry-run, no changes
+        uses: vhick/portable-release-publisher@v1.1.1
+        with:
+          files: |
+            dist/*.zip
+            dist/*.paf.exe
+          tag: ${{ steps.resolved.outputs.tag }}
+          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r1)
+          tag-prefix: portable-
+          keep-releases: '3'
+          prune: 'false'
+          dry-run: 'true'
+      - name: Publish ZIP and PAF only when explicitly enabled
+        if: ${{ inputs.publish }}
+        uses: vhick/portable-release-publisher@v1.1.1
+        with:
+          files: |
+            dist/*.zip
+            dist/*.paf.exe
+          tag: ${{ steps.resolved.outputs.tag }}
+          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r1)
+          tag-prefix: portable-
+          keep-releases: '3'
+          prune: 'false'
+          dry-run: 'false'
+      - name: Preserve independently validated ZIP when installer/publisher fails
+        if: ${{ failure() && steps.resolved.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FileOptimizer-Validated-ZIP-InstallerOrReleaseFailed
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 7

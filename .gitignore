@@ -1,0 +1,9 @@
+# Only builder sources belong in GitHub. Generated binaries are output artifacts.
+work/
+dist/
+__pycache__/
+*.pyc
+*.paf.exe
+*.zip
+.vs/
+.DS_Store
