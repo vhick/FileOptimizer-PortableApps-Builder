@@ -21,7 +21,7 @@
 | Plugin job lifecycle | NOT YET VERIFIED | Requires actual plugin operations |
 | Notifications / WebView2 / advertisements | NOT YET VERIFIED | Requires interactive Explorer and WebView2 runtime |
 | TraceGuard for arbitrary user profile files | NOT APPLICABLE | No broad scavenger because no evidence justifies it; private App-sidecar transaction is used |
-| Installer creation via shared custom-nsis action | FAILED/BLOCKED in b1r2; NOT YET VERIFIED in b1r3 | `running-exe` argument path was rejected before NSIS; b1r3 fixes the parameter |
+| Installer creation via shared custom-nsis action | FAILED/BLOCKED in b1r2; NOT YET VERIFIED in b1r4 | `running-exe` argument path was rejected before NSIS; b1r4 fixes the parameter |
 | Installer fresh install/reinstall/upgrade | NOT YET VERIFIED | Needs manual test on disposable Windows user account |
 | Publisher dry-run and actual Release | NOT YET VERIFIED | Workflow staged, not run; publication gated by explicit `publish=true` |
 | Direct NATIVE application startup/local-data containment | NOT APPLICABLE | Mode is PORTABLEAPPS, not NATIVE |
@@ -49,14 +49,27 @@
 
 **Do not certify full portability, app functionality, or installer safety until the real Windows acceptance steps pass.**
 
-## 2026-11-16 b1r3 regression tests (local, non-Windows)
+## 2026-11-16 b1r4 regression tests (local, non-Windows)
 - 14 local deterministic tests passed, including an additional strict assertion for the pinned shared Package Builder's Windows-only `running-exe` path.
-- The prior b1r2 hosted runner verified official SourceForge downloads, Windows launcher compilation and independently validated ZIP creation. The revised b1r3 GitHub workflow has NOT run, and the installer, publisher and real GUI/portability remain NOT YET VERIFIED.
+- The prior b1r2 hosted runner verified official SourceForge downloads, Windows launcher compilation and independently validated ZIP creation. The revised b1r4 GitHub workflow has NOT run, and the installer, publisher and real GUI/portability remain NOT YET VERIFIED.
 
-## 2026-11-16 hosted Windows build evidence (b1r2) and b1r3 patch
+## 2026-11-16 hosted Windows build evidence (b1r2) and b1r4 patch
 - SourceForge HTML returned HTTP 403, but the developer-history fallback resolved exact SHA-256-pinned `18.10.2904`.
 - Both official upstream archives were downloaded and hashes verified on GitHub Windows Server 2022.
 - The MSVC Win64 launcher compiled (only repeated UNICODE macro warnings), staging succeeded, and `FileOptimizerCommunityPortable-18.10.2904-b1r2.zip` was independently validated. Inner ZIP SHA-256: `8e28f49a206ff14525f3f7016a74429904cd052e5d1ac521e856570bb8deb3a8`.
-- Pinned shared Package Builder rejected forward slashes in `running-exe`; failure occurred before NSIS compiling. b1r3 uses a quoted Windows backslash path with a static contract regression test.
+- Pinned shared Package Builder rejected forward slashes in `running-exe`; failure occurred before NSIS compiling. b1r4 uses a quoted Windows backslash path with a static contract regression test.
 - Shared builder's installer production, publisher dry-run, live application launch, data safety, registry restoration, notifications and interactive install/upgrade remain **NOT YET VERIFIED**.
 - The failed workflow uploaded the valid ZIP as GitHub artifact ID `14204413716` (run `43822539246`).
+
+
+## b1r3 November 16, 2026 uploaded runner log
+
+- GitHub checkout / Python dependencies: **WINDOWS-CI-PASSED**.
+- Static tests: **14/14 passed** (b1r3).
+- Shared action metadata verification: **WINDOWS-CI-PASSED**.
+- SourceForge listing: **FAILED** HTTP 403.
+- Official developer history: **FAILED** HTTP 500.
+- App download, launcher compilation, ZIP, installer, publisher: **NOT REACHED in this run**.
+- b1r4 new tests: local only; **b1r4 has not been executed in GitHub Actions**.
+
+Default version is now the independently verified exact release 18.10.2904; latest-live mode remains explicitly available and fail-closed.

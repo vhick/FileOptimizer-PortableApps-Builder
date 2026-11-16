@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Resolve FileOptimizer stable releases safely despite SourceForge HTML 403s.
+"""Resolve FileOptimizer releases with strict SHA-256 identity verification.
 
-Prefer SourceForge file metadata. If SourceForge HTML blocks CI, cross-check the
-DEVELOPER'S OFFICIAL release history with an exact pinned, checked SHA-256 pair.
-Never guess build numbers, switch to SVN trunk, or accept unchecked assets.
+The default Actions workflow chooses an explicitly audited release so it does not
+require intermittently blocked SourceForge HTML metadata on routine builds.
+The optional `latest` mode checks the official SourceForge file listing and,
+on 403, the official developer history. If both are inaccessible it fails with
+an actionable diagnostic rather than pretending to know the latest version.
 """
 from __future__ import annotations
 import argparse
@@ -30,7 +32,7 @@ VERIFIED = {
     }
 }
 VERSION = re.compile(r'^\d+\.\d+\.\d+$')
-AGENT = 'FileOptimizerCommunityPortableBuilder/1.1 (+https://sourceforge.net/projects/nikkhokkho/)'
+AGENT = 'FileOptimizerCommunityPortableBuilder/1.2 (+https://sourceforge.net/projects/nikkhokkho/)'
 # All endpoints below are SourceForge-controlled download services; final bytes MUST
 # match the exact-source SHA-256. Mirrors are for availability, not provenance.
 OFFICIAL_DOWNLOAD_HOSTS = (
@@ -107,7 +109,17 @@ def discover_latest() -> tuple[str, str]:
             raise
         print('NOTICE: SourceForge HTML returned 403; checking the independent '
               'official developer release-history page.', file=sys.stderr)
-        vendor = fetch(VENDOR_HISTORY, size_limit=4_000_000).decode('utf-8', 'replace')
+        try:
+            vendor = fetch(VENDOR_HISTORY, size_limit=4_000_000).decode('utf-8', 'replace')
+        except RuntimeError as vendor_error:
+            raise RuntimeError(
+                'Unable to verify latest FileOptimizer release: SourceForge listing '
+                'returned HTTP 403 and the official developer-history page also '
+                f'failed ({vendor_error}). For a reproducible build, re-run '
+                'GitHub Actions with version=18.10.2904 (the audited SHA-256-pinned '
+                'release), or retry latest after the metadata services recover. '
+                'No unverified version was selected.'
+            ) from vendor_error
         return choose_verified_from_history(vendor), 'developer-history-sha256-pinned-403-fallback'
     options = available_versions(listing)
     if not options:
@@ -182,9 +194,9 @@ def download(version: str, name: str, expected_sha: str, target: Path) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument('--version', default='latest')
+    parser.add_argument('--version', default='18.10.2904')
     parser.add_argument('--out', type=Path, required=True)
-    parser.add_argument('--builder-revision', default='b1r3')
+    parser.add_argument('--builder-revision', default='b1r4')
     args = parser.parse_args()
     if args.version == 'latest':
         version, discovery_method = discover_latest()

@@ -52,6 +52,36 @@ class KitTests(unittest.TestCase):
   finally:
    resolver.fetch=old
 
+ def test_default_dispatch_uses_preverified_exact_version(self):
+  """SourceForge directory 403 and vendor 500 must not block normal builds."""
+  flow=yaml.load((ROOT/'.github/workflows/build.yml').read_text(encoding='utf-8'),Loader=yaml.BaseLoader)
+  default=flow['on']['workflow_dispatch']['inputs']['version']['default']
+  self.assertEqual(default,'18.10.2904')
+  self.assertIn(default,resolver.VERIFIED)
+  self.assertEqual(set(resolver.VERIFIED[default]),set(resolver.FILES))
+  ps=(ROOT/'scripts/build.ps1').read_text(encoding='utf-8')
+  self.assertIn('b1r4',ps)
+  self.assertIn("$Version = '18.10.2904'",ps)
+  self.assertIn("parser.add_argument('--version', default='18.10.2904')",(ROOT/'scripts/resolve.py').read_text(encoding='utf-8'))
+
+ def test_latest_both_metadata_sources_fail_closed_with_actionable_help(self):
+  old=resolver.fetch
+  calls=[]
+  try:
+   def fixture(url,*args,**kwargs):
+    calls.append(url)
+    if url==resolver.BASE+'/':
+     raise RuntimeError('SourceForge metadata error 403: '+url)
+    if url==resolver.VENDOR_HISTORY:
+     raise RuntimeError('Metadata request failed: '+url+' (HTTP Error 500)')
+    raise AssertionError('Unexpected endpoint: '+url)
+   resolver.fetch=fixture
+   with self.assertRaisesRegex(RuntimeError,r'version=18\.10\.2904.*No unverified version was selected'):
+    resolver.discover_latest()
+   self.assertEqual(calls,[resolver.BASE+'/',resolver.VENDOR_HISTORY])
+  finally:
+   resolver.fetch=old
+
  def test_reject_prerelease_as_version(self):
   self.assertFalse(resolver.VERSION.fullmatch('19.00.22-beta'))
   self.assertFalse(resolver.VERSION.fullmatch('master'))

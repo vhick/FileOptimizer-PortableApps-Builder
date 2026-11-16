@@ -3,10 +3,10 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Latest stable SourceForge version, or exact stable folder e.g. 18.10.2904'
+        description: 'Use audited version 18.10.2904 (recommended), or latest for live discovery (may be blocked by SourceForge)'
         required: true
         type: string
-        default: latest
+        default: '18.10.2904'
       publish:
         description: 'Actually publish validated ZIP and installer to THIS repository releases'
         required: true
@@ -65,7 +65,7 @@ jobs:
             dist/*.zip
             dist/*.paf.exe
           tag: ${{ steps.resolved.outputs.tag }}
-          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r3)
+          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r4)
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'
@@ -78,7 +78,7 @@ jobs:
             dist/*.zip
             dist/*.paf.exe
           tag: ${{ steps.resolved.outputs.tag }}
-          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r3)
+          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r4)
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'
