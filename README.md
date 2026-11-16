@@ -1,20 +1,30 @@
-# b1r2 SourceForge HTTP 403 fix
+# b1r3 fix — Portable-Package-Builder running-exe path
 
-The first GitHub Actions run failed before application downloads when the HTML file-listing endpoint returned **HTTP 403**. For `version=latest`, b1r2 checks the official developer history (`nikkhokkho.sourceforge.io`) if that specific endpoint fails with 403, and selects only an exact previously SHA-256-pinned SourceForge release whose developer major/minor version matches. It never silently uses an older major/minor release or SVN HEAD. Official SourceForge CDN endpoints are used for downloads, and each file must exactly match an audited SHA-256. If an endpoint blocks CI, another SourceForge-operated CDN endpoint is tried; checksum mismatch stops immediately.
+The 2026-11-16 b1r2 hosted Windows runner **successfully** downloaded and SHA-256 verified official release 18.10.2904, verified the matching source archive, compiled the launcher, and validated a real ZIP. It stopped when pinned `Portable-Package-Builder@v1.0.0` rejected `running-exe: App/FileOptimizer/FileOptimizer64.exe` because that action explicitly requires a Windows relative path with backslashes. b1r3 passes `running-exe: 'App\FileOptimizer\FileOptimizer64.exe'`. A regression test now guards this exact action contract. This fixes the *observed argument failure*; installer creation, installation/upgrade behavior, and interactive Windows portability remain unverified until the b1r3 workflow is run and acceptance tests pass.
 
-**Practical first rerun:** choose `version=18.10.2904` to bypass HTML release discovery entirely, or use `latest` to exercise the developer-history fallback. This has NOT yet been tested on GitHub Windows runners. SHA-256-pinned archives are still mandatory, so a future unknown release will fail safely until audited.
+In the failed b1r2 run, the ZIP was uploaded as the workflow artifact `FileOptimizer-Validated-ZIP-InstallerOrReleaseFailed`, artifact ID 14204413716, run 43822539246. The archive upload SHA-256 is NOT the same as the inner FileOptimizer portable ZIP SHA-256. The user can download that ZIP from the GitHub run's **Artifacts** panel; it has not been runtime-tested.
+
+Full application recompilation from source is **not needed** for the selected PORTABLEAPPS mode: the original developer supplies a portable full archive and a matching source snapshot. The main GUI source requires Embarcadero C++ Builder 13.2 Florence and many third-party optimization tools. Continue using hash-verified official binaries unless a source patch proves necessary to satisfy a particular functional/portability requirement.
+
+---
+
+# SourceForge HTTP 403 handling (verified in b1r2 Windows build)
+
+The first GitHub Actions run failed before application downloads when the HTML file-listing endpoint returned **HTTP 403**. For `version=latest`, b1r3 checks the official developer history (`nikkhokkho.sourceforge.io`) if that specific endpoint fails with 403, and selects only an exact previously SHA-256-pinned SourceForge release whose developer major/minor version matches. It never silently uses an older major/minor release or SVN HEAD. Official SourceForge CDN endpoints are used for downloads, and each file must exactly match an audited SHA-256. If an endpoint blocks CI, another SourceForge-operated CDN endpoint is tried; checksum mismatch stops immediately.
+
+**Practical first rerun:** choose `version=18.10.2904` to bypass HTML release discovery entirely, or use `latest` to exercise the developer-history fallback. This fallback succeeded in the uploaded b1r2 GitHub Windows build. SHA-256-pinned archives are still mandatory, so a future unknown release will fail safely until audited.
 
 Pinned shared actions are now referenced by immutable SHA values observed in the user's successful runner-action-resolution log while preserving v1.0.0 and v1.1.1 identities.
 
 ---
 
-# FileOptimizer Community PortableApps Builder — b1r2
+# FileOptimizer Community PortableApps Builder — b1r3
 
 **Selected product:** PORTABLEAPPS only; Windows x64. This is an independent community build of **FileOptimizer**, not an official PortableApps.com release. The upstream SourceForge project `nikkhokkho` contains several programs, but its actively maintained SVN `trunk/FileOptimizer` tree matches the current official FileOptimizer portable distribution.
 
 **What the kit does:** An unattended GitHub Actions job resolves a verified stable SourceForge **FileOptimizerFull.7z.exe** plus matching **FileOptimizerSource.7z**, verifies vendor-published SHA-256 values, extracts without running either archive, examines the release source for the audited storage/shell patterns, stages the developer's authentic 64-bit executable and complete `Plugins64`, compiles a genuine community `FileOptimizerPortable.exe` launcher using MSVC, builds and tests an independent ZIP, builds a PortableApps-style `.paf.exe` using **vhick/Portable-Package-Builder@v1.0.0** (`custom-nsis`), validates the installer PE/hash, and previews (or explicitly publishes) the two files using **vhick/portable-release-publisher@v1.1.1**.
 
-**Never** mistake a successful CI build for real Windows GUI or install/upgrade testing. b1r2 has static tests but no verified Windows builds yet. It is a **test candidate**, not a certified PortableApps.com package. See `docs/VALIDATION.md` and `docs/OPEN-ISSUES.md`.
+**Never** mistake a successful CI build for real Windows GUI or install/upgrade testing. The launcher compiled and its ZIP passed CI validation in b1r2; the b1r3 installer workflow and real Windows runtime remain unverified. It is a **test candidate**, not a certified PortableApps.com package. See `docs/VALIDATION.md` and `docs/OPEN-ISSUES.md`.
 
 ## Contents
 
@@ -28,7 +38,7 @@ scripts/package.py               Validated root layout, compiled PE and independ
 scripts/verify_installer.py      Separate custom-NSIS installer PE/hash checks
 launcher/FileOptimizerPortable.cpp  REAL native Win64 launcher source
 LICENSE-LAUNCHER.txt            Independent launcher MIT; upstream remains AGPL
-tests/test_static.py             8 executable static unit tests
+tests/test_static.py             14 executable static unit tests
 docs/AUDIT.md                    Upstream findings and bounded storage decisions
 docs/VALIDATION.md               Honest evidence matrix, live Windows acceptance steps
 docs/OPEN-ISSUES.md              Unverified behavior and fail-safe limitations
@@ -58,7 +68,7 @@ Detailed beginner instructions: `docs/SETUP.md`.
 
 ## Revision identity
 
-Builder b1r2, portable package revision r1. Stable versions use **numeric** three-component SourceForge folder versions (e.g. `18.10.2904`). An exact release source-archive SHA-256 is recorded as the source identity instead of inventing a Git SHA for SourceForge's SVN/release snapshot. Every package also includes the original version-matched 7z source archive, launcher source, package identity JSON and developer icon.
+Builder b1r3, portable package revision r1. Stable versions use **numeric** three-component SourceForge folder versions (e.g. `18.10.2904`). An exact release source-archive SHA-256 is recorded as the source identity instead of inventing a Git SHA for SourceForge's SVN/release snapshot. Every package also includes the original version-matched 7z source archive, launcher source, package identity JSON and developer icon.
 
 Pinned actions: `vhick/Portable-Package-Builder@v1.0.0` and `vhick/portable-release-publisher@v1.1.1`. Exact `action.yml` interfaces were inspected for the pinned tags as of the build-kit creation date; CI also resolves and records tag commits. The workflow uses the verified **immutable commit SHA** for each action; the verification script also ensures neither pinned tag has moved. See `docs/OPEN-ISSUES.md`.
 
@@ -71,4 +81,4 @@ Official PortableApps format: https://portableapps.com/development/portableapps.
 
 FileOptimizer: **AGPL** (see upstream author). The developer's full binary archive contains third-party compression programs whose licenses may differ. The pinned official package is reused without patching vendor binaries; complete independent audit of all plugin redistribution terms remains an open issue. The independently compiled launcher and builder scripts are MIT-licensed, not the upstream app. Do not imply the program is code signed or officially certified.
 
-**No app binaries, installer, ZIP package or public release has been generated by this chat.** This ZIP is the actual downloadable source builder kit; the GitHub workflow is the first possible Windows compilation and distribution test.
+**The uploaded b1r2 runner produced a compiled application package ZIP and preserved it as a workflow artifact, but did not generate an installer or release. This chat creates only the revised builder kit; b1r3 still needs a new hosted Windows workflow run.** This ZIP is the updated source builder kit; the next GitHub run must validate the corrected installer configuration.

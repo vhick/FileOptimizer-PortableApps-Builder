@@ -1,8 +1,8 @@
 # Known blockers, risks and next tests
 
-## Blockers to calling b1r2 production-ready
+## Blockers to calling b1r3 production-ready
 
-1. **No hosted Windows build or manual runtime evidence yet.** The kit is downloadable source, not a guaranteed successful CI product. MSVC compilation, 7-Zip SFX extraction, asset layout, original icon extraction, installer action behavior, and publisher dry-run must all be checked on the first workflow run.
+1. **Hosted Windows application-package build passed in b1r2, but no manual runtime evidence yet.** MSVC compiled the launcher; the authentic application and source archives verified; staging and independent portable ZIP validation succeeded. The first shared installer attempt failed because `running-exe` used forward slashes; b1r3 corrects that contract, but installer generation/publisher dry-run and actual Windows runtime still need a new runner/interactive check.
 2. **Crash immediately followed by a PAF installer update without recovery:** FileOptimizer may have recently changed `App/FileOptimizer/FileOptimizer.ini` or `.log`, while `Data/Settings` has an older copy. The root launcher normally recovers those private files on its next run; the shared installer may replace the old App directory *before* that next run. The pending marker survives in `Data`, but old App-side files might be removed. **Do not upgrade while `Data/Control/active.run` exists.** This is a real unfinished contract requirement. It may need a narrowly scoped new pre-install recovery/abort feature in the shared Package Builder rather than duplicating installer code in this kit.
 3. **Registry restoration concurrency:** Upstream always writes `FileOptimizer64.exe=11001` to HKCU Internet Explorer browser-emulation feature controls. Launcher restores only if the value still exactly matches that write, preserving unexpected edits. Duplicate installed-app detection uses a source-confirmed named mutex, but unexpected concurrent software edits remain a tradeoff. When conflict is detected, launcher leaves a journal and refuses further unsafe cleanup.
 4. **Full plugin audit:** FileOptimizer ships many third-party tools; not every child writeset, programmatic error behavior, and redistribution obligation has been audited. The upstream developer's official distribution is retained, but this does not prove every third-party license permits independent republishing. Release after confirming bundled notices and legal obligations.
@@ -13,7 +13,7 @@
 
 ## SourceForge retrieval policy
 
-- The SourceForge project files page is the **preferred** stable release discovery source, not SVN trunk `HEAD`. GitHub-hosted HTML requests may receive HTTP 403; b1r2 instead checks the official developer release history against the exact-version, SHA-256-pinned manifest. An unknown version or unavailable developer history fails closed.
+- The SourceForge project files page is the **preferred** stable release discovery source, not SVN trunk `HEAD`. GitHub-hosted HTML requests may receive HTTP 403; b1r3 instead checks the official developer release history against the exact-version, SHA-256-pinned manifest. An unknown version or unavailable developer history fails closed.
 - Download exactly two developer files for the same stable folder: Full SFX, and Source 7z.
 - Use audited exact-release SHA-256 values pinned for **18.10.2904**. The SourceForge `/download` page streams a large archive, not a reliable HTML checksum API. All unknown versions fail closed until independently audited manifest hashes are added.
 - Do not trust a SourceForge folder label by itself; compute the full download digest and compare it. Do not execute the SFX or upstream installer.
@@ -24,7 +24,7 @@
 
 | Error in workflow | Meaning and safe action |
 |---|---|
-| `SourceForge metadata error 403` | b1r2 checks the official developer release history and exact SHA-256-pinned version; if that page is blocked, use explicit `18.10.2904` until access is restored. Do not use SVN HEAD. |
+| `SourceForge metadata error 403` | b1r3 checks the official developer release history and exact SHA-256-pinned version; if that page is blocked, use explicit `18.10.2904` until access is restored. Do not use SVN HEAD. |
 | `Unable to verify official SHA-256` | New release's hash page could not be verified. Stop; inspect the developer page before extending trusted hash mapping. |
 | `Source storage/shell assumptions changed` | Upstream changed audited code; investigate current `cppMain.cpp` and adapt the launcher rather than bypassing the check. |
 | `Expected one vendor FileOptimizer64.exe alongside Plugins64` | Archive structure changed; inspect with 7-Zip and update application-specific staging. |
@@ -42,5 +42,9 @@
 ## Actual uploaded-run evidence (2026-11-16)
 - GitHub runner completed checkout, Python setup, 8 static tests and shared-action verification.
 - **Failure:** HTTP 403 from `https://sourceforge.net/projects/nikkhokkho/files/FileOptimizer/` in `resolve.py` while `version=latest`. No binary download or launcher compilation occurred.
-- b1r2 adds a developer-history-verified exact-release fallback for HTTP 403, plus SourceForge-operated CDN failover and SHA-256 enforcement.
-- This is **not yet confirmed** on the hosted Windows runner. If all official download endpoints fail, there is no safe magic workaround; further SourceForge access investigation is required.
+- b1r3 adds a developer-history-verified exact-release fallback for HTTP 403, plus SourceForge-operated CDN failover and SHA-256 enforcement.
+- This fallback succeeded on the uploaded b1r2 Windows runner. If all official download endpoints fail, there is no safe magic workaround; further SourceForge access investigation is required.
+
+## b1r3 installer path compatibility
+- Pinned shared builder's `scripts/common.ps1` `Test-RelativeEXE` accepts `\` path separators, not `/`; build log failed before NSIS with `running-exe must be a relative Windows .exe file inside the portable folder`.
+- `running-exe` is now `App\FileOptimizer\FileOptimizer64.exe`. A CI static test ensures this remains a proper Windows relative path; rerun is still necessary.

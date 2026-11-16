@@ -184,7 +184,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('--version', default='latest')
     parser.add_argument('--out', type=Path, required=True)
-    parser.add_argument('--builder-revision', default='b1r2')
+    parser.add_argument('--builder-revision', default='b1r3')
     args = parser.parse_args()
     if args.version == 'latest':
         version, discovery_method = discover_latest()

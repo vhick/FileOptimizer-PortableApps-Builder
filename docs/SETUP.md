@@ -7,7 +7,7 @@
 3. Click **Create Repository**. Do not fork the upstream SourceForge project, do not use any other existing portable builder folder and do not run `git init`.
 4. Choose **Repository → Show in Explorer**. This is your new repository's top-level folder.
 5. Extract all folders and files **inside** this kit ZIP into that folder. You should see `README.md`, `scripts`, `launcher`, `docs`, `tests`, and **.github/workflows/build.yml**. In Explorer, enable **View → Show → Hidden items** if you cannot see `.github`.
-6. Back in GitHub Desktop, type a short commit message (e.g. `FileOptimizer PortableApps builder b1r2`), click **Commit to main**, then **Publish repository**. Public is usually appropriate for builder source and hosted runner access, but it does **not** grant permission to redistribute any third-party plugin.
+6. Back in GitHub Desktop, type a short commit message (e.g. `FileOptimizer PortableApps builder b1r3`), click **Commit to main**, then **Publish repository**. Public is usually appropriate for builder source and hosted runner access, but it does **not** grant permission to redistribute any third-party plugin.
 
 ## B. First validation build, without a public release
 
@@ -38,5 +38,5 @@
 
 Create copies of nonimportant PNG/JPG/PDF test files. Launch FileOptimizer from the root executable, change one setting and exit, restart, and verify the setting stays. Check that the originals or Recycle Bin behavior match FileOptimizer's options. Test one plugin at a time. Because FileOptimizer can rewrite files, do not begin with your only copy of important documents.
 
-## b1r2 recommended first run after SourceForge 403
+## b1r3 recommended first run after SourceForge 403
 Choose `version=18.10.2904`, `publish=false`. This bypasses the HTML directory metadata request and uses the exact audited SHA-256 manifest. If the official SourceForge download CDN endpoints also reject the runner, preserve the logs; do not download from unrelated mirrors or bypass SHA-256 enforcement. Once this works, try `version=latest` to exercise the official developer-history fallback.

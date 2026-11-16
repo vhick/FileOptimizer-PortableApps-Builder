@@ -78,6 +78,19 @@ class KitTests(unittest.TestCase):
   self.assertIn('vhick/Portable-Package-Builder@0112c35580e83b37eb8757ebcb949274e1631a04', uses)
   self.assertEqual(uses.count('vhick/portable-release-publisher@cb64f86ac2d8c67506db5832de07f9ff58cbeaeb'), 2)
   self.assertEqual(flow['concurrency']['cancel-in-progress'],'false')
+ def test_package_builder_running_exe_windows_path(self):
+  """Pinned Portable-Package-Builder v1.0.0 requires backslashes in running-exe."""
+  flow=yaml.load((ROOT/'.github/workflows/build.yml').read_text(encoding='utf-8'),Loader=yaml.BaseLoader)
+  steps=flow['jobs']['package']['steps']
+  installers=[step for step in steps if step.get('uses','').startswith('vhick/Portable-Package-Builder@')]
+  self.assertEqual(len(installers),1)
+  actual=installers[0]['with']['running-exe']
+  self.assertEqual(actual,r'App\FileOptimizer\FileOptimizer64.exe')
+  self.assertNotIn('/',actual)
+  self.assertFalse(actual.startswith('\\'))
+  self.assertNotIn('..',actual.split('\\'))
+  self.assertTrue(actual.lower().endswith('.exe'))
+
  def test_approved_action_sha_matches_workflow(self):
   verifier=mod('verify_actions')
   workflow=(ROOT/'.github/workflows/build.yml').read_text(encoding='utf-8')
