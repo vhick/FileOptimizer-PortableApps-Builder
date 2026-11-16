@@ -48,3 +48,7 @@
 15. Security test: symlink/junction in `Data/Settings` or private App sidecar should stop without following that path; simulate locked files and verify no unverified source is deleted.
 
 **Do not certify full portability, app functionality, or installer safety until the real Windows acceptance steps pass.**
+
+## 2026-11-16 b1r2 regression tests (local, non-Windows)
+- Four new deterministic tests: developer-history fallback for HTTP 403, newer version fail-closed, unknown SHA fail-closed, and HTTP 429 non-fallback.
+- SourceForge CDN file download, Windows launcher compilation, actual GUI startup, installer and publication remain NOT YET VERIFIED in b1r2.

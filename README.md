@@ -1,10 +1,20 @@
-# FileOptimizer Community PortableApps Builder — b1r1
+# b1r2 SourceForge HTTP 403 fix
+
+The first GitHub Actions run failed before application downloads when the HTML file-listing endpoint returned **HTTP 403**. For `version=latest`, b1r2 checks the official developer history (`nikkhokkho.sourceforge.io`) if that specific endpoint fails with 403, and selects only an exact previously SHA-256-pinned SourceForge release whose developer major/minor version matches. It never silently uses an older major/minor release or SVN HEAD. Official SourceForge CDN endpoints are used for downloads, and each file must exactly match an audited SHA-256. If an endpoint blocks CI, another SourceForge-operated CDN endpoint is tried; checksum mismatch stops immediately.
+
+**Practical first rerun:** choose `version=18.10.2904` to bypass HTML release discovery entirely, or use `latest` to exercise the developer-history fallback. This has NOT yet been tested on GitHub Windows runners. SHA-256-pinned archives are still mandatory, so a future unknown release will fail safely until audited.
+
+Pinned shared actions are now referenced by immutable SHA values observed in the user's successful runner-action-resolution log while preserving v1.0.0 and v1.1.1 identities.
+
+---
+
+# FileOptimizer Community PortableApps Builder — b1r2
 
 **Selected product:** PORTABLEAPPS only; Windows x64. This is an independent community build of **FileOptimizer**, not an official PortableApps.com release. The upstream SourceForge project `nikkhokkho` contains several programs, but its actively maintained SVN `trunk/FileOptimizer` tree matches the current official FileOptimizer portable distribution.
 
-**What the kit does:** An unattended GitHub Actions job downloads the most recent stable SourceForge **FileOptimizerFull.7z.exe** plus matching **FileOptimizerSource.7z**, verifies vendor-published SHA-256 values, extracts without running either archive, examines the release source for the audited storage/shell patterns, stages the developer's authentic 64-bit executable and complete `Plugins64`, compiles a genuine community `FileOptimizerPortable.exe` launcher using MSVC, builds and tests an independent ZIP, builds a PortableApps-style `.paf.exe` using **vhick/Portable-Package-Builder@v1.0.0** (`custom-nsis`), validates the installer PE/hash, and previews (or explicitly publishes) the two files using **vhick/portable-release-publisher@v1.1.1**.
+**What the kit does:** An unattended GitHub Actions job resolves a verified stable SourceForge **FileOptimizerFull.7z.exe** plus matching **FileOptimizerSource.7z**, verifies vendor-published SHA-256 values, extracts without running either archive, examines the release source for the audited storage/shell patterns, stages the developer's authentic 64-bit executable and complete `Plugins64`, compiles a genuine community `FileOptimizerPortable.exe` launcher using MSVC, builds and tests an independent ZIP, builds a PortableApps-style `.paf.exe` using **vhick/Portable-Package-Builder@v1.0.0** (`custom-nsis`), validates the installer PE/hash, and previews (or explicitly publishes) the two files using **vhick/portable-release-publisher@v1.1.1**.
 
-**Never** mistake a successful CI build for real Windows GUI or install/upgrade testing. b1r1 has static tests but no verified Windows builds yet. It is a **test candidate**, not a certified PortableApps.com package. See `docs/VALIDATION.md` and `docs/OPEN-ISSUES.md`.
+**Never** mistake a successful CI build for real Windows GUI or install/upgrade testing. b1r2 has static tests but no verified Windows builds yet. It is a **test candidate**, not a certified PortableApps.com package. See `docs/VALIDATION.md` and `docs/OPEN-ISSUES.md`.
 
 ## Contents
 
@@ -48,9 +58,9 @@ Detailed beginner instructions: `docs/SETUP.md`.
 
 ## Revision identity
 
-Builder b1r1, portable package revision r1. Stable versions use **numeric** three-component SourceForge folder versions (e.g. `18.10.2904`). An exact release source-archive SHA-256 is recorded as the source identity instead of inventing a Git SHA for SourceForge's SVN/release snapshot. Every package also includes the original version-matched 7z source archive, launcher source, package identity JSON and developer icon.
+Builder b1r2, portable package revision r1. Stable versions use **numeric** three-component SourceForge folder versions (e.g. `18.10.2904`). An exact release source-archive SHA-256 is recorded as the source identity instead of inventing a Git SHA for SourceForge's SVN/release snapshot. Every package also includes the original version-matched 7z source archive, launcher source, package identity JSON and developer icon.
 
-Pinned actions: `vhick/Portable-Package-Builder@v1.0.0` and `vhick/portable-release-publisher@v1.1.1`. Exact `action.yml` interfaces were inspected for the pinned tags as of the build-kit creation date; CI also resolves and records tag commits. Their references remain **mutable tags**, not immutable SHAs. See `docs/OPEN-ISSUES.md`.
+Pinned actions: `vhick/Portable-Package-Builder@v1.0.0` and `vhick/portable-release-publisher@v1.1.1`. Exact `action.yml` interfaces were inspected for the pinned tags as of the build-kit creation date; CI also resolves and records tag commits. The workflow uses the verified **immutable commit SHA** for each action; the verification script also ensures neither pinned tag has moved. See `docs/OPEN-ISSUES.md`.
 
 ## Source and licenses
 

@@ -19,7 +19,7 @@ python -m unittest discover -s (Join-Path $root 'tests') -v
 if ($LASTEXITCODE -ne 0) { throw 'Local static unit tests failed; refusing build' }
 python (Join-Path $root 'scripts\verify_actions.py') (Join-Path $work 'shared-actions.json')
 if ($LASTEXITCODE -ne 0) { throw 'Shared action verification failed' }
-python (Join-Path $root 'scripts\resolve.py') --version $Version --out $work --builder-revision b1r1
+python (Join-Path $root 'scripts\resolve.py') --version $Version --out $work --builder-revision b1r2
 if ($LASTEXITCODE -ne 0) { throw 'Official SourceForge release resolution/download/hash verification failed' }
 $seven = Get-Command 7z.exe -ErrorAction SilentlyContinue | Select-Object -First 1
 $sevenPath = $null

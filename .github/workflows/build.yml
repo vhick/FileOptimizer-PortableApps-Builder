@@ -42,7 +42,7 @@ jobs:
           "tag=$($identity.release_tag)" >> $env:GITHUB_OUTPUT
       - name: Build independent PortableApps-style installer (custom NSIS)
         id: installer
-        uses: vhick/Portable-Package-Builder@v1.0.0
+        uses: vhick/Portable-Package-Builder@0112c35580e83b37eb8757ebcb949274e1631a04 # v1.0.0
         with:
           source-dir: work/stage/FileOptimizerCommunityPortable
           output-dir: dist
@@ -59,26 +59,26 @@ jobs:
           python ./scripts/verify_installer.py --file "$env:INSTALLER_FILE" --sha256 "$env:INSTALLER_SHA256" --dist ./dist
           if ($LASTEXITCODE -ne 0) { throw 'Installer validation failed' }
       - name: Publisher dry-run, no changes
-        uses: vhick/portable-release-publisher@v1.1.1
+        uses: vhick/portable-release-publisher@cb64f86ac2d8c67506db5832de07f9ff58cbeaeb # v1.1.1
         with:
           files: |
             dist/*.zip
             dist/*.paf.exe
           tag: ${{ steps.resolved.outputs.tag }}
-          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r1)
+          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r2)
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'
           dry-run: 'true'
       - name: Publish ZIP and PAF only when explicitly enabled
         if: ${{ inputs.publish }}
-        uses: vhick/portable-release-publisher@v1.1.1
+        uses: vhick/portable-release-publisher@cb64f86ac2d8c67506db5832de07f9ff58cbeaeb # v1.1.1
         with:
           files: |
             dist/*.zip
             dist/*.paf.exe
           tag: ${{ steps.resolved.outputs.tag }}
-          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r1)
+          release-title: FileOptimizer Portable ${{ steps.resolved.outputs.version }} (b1r2)
           tag-prefix: portable-
           keep-releases: '3'
           prune: 'false'

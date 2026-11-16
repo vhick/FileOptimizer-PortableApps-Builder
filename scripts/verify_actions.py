@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Read pinned published action.yml files and verify their required interfaces.
-Note: static workflow 'uses: @tag' cannot eliminate mutable-tag risk; record SHAs.
-"""
+"""Verify published shared action interfaces AND their immutable approved commits."""
 import hashlib
 import json
 from pathlib import Path
 import sys
 import urllib.request
 import yaml
+
+APPROVED_COMMITS = {
+  'vhick/Portable-Package-Builder': '0112c35580e83b37eb8757ebcb949274e1631a04',
+  'vhick/portable-release-publisher': 'cb64f86ac2d8c67506db5832de07f9ff58cbeaeb',
+}
 
 ACTIONS = [
  ('vhick', 'Portable-Package-Builder', 'v1.0.0',
@@ -17,7 +20,7 @@ ACTIONS = [
   {'files','tag','release-title','tag-prefix','keep-releases','prune','dry-run'},set()),
 ]
 def get(url):
- req=urllib.request.Request(url,headers={'User-Agent':'FileOptimizerCommunityPortableBuilder/1.0','Accept':'application/vnd.github+json'})
+ req=urllib.request.Request(url,headers={'User-Agent':'FileOptimizerCommunityPortableBuilder/1.1','Accept':'application/vnd.github+json'})
  with urllib.request.urlopen(req,timeout=40) as f: return f.read()
 def main(out):
  results=[]
@@ -28,6 +31,9 @@ def main(out):
    tagobj=json.loads(get(item['url']))
    item=tagobj['object'];sha=item['sha']
   if item['type']!='commit' or len(sha)!=40:raise RuntimeError(f'Unresolved immutable SHA: {repo}')
+  approved=APPROVED_COMMITS[f'{owner}/{repo}']
+  if sha.lower() != approved:
+   raise RuntimeError(f'Pinned action tag moved: {owner}/{repo}@{tag} resolved to {sha}; expected {approved}')
   raw=get(f'https://raw.githubusercontent.com/{owner}/{repo}/{sha}/action.yml')
   action=yaml.safe_load(raw)
   if not inputs.issubset(action.get('inputs',{})):raise RuntimeError(f'Inputs have changed: {repo}')
